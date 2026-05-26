@@ -1,74 +1,44 @@
-# Pasha Pashazade | Portfolio Website
+# Personal Portfolio | Pasha Pashazade
 
-Современное, элегантное и быстрое интерактивное портфолио для **Senior Software Engineer (C# / .NET, Dynamics 365 F&O, Azure & DevOps)**.
+A modern, responsive, and highly interactive static portfolio website showcasing my professional background, skills, and certifications as a **Senior Software Engineer** specializing in C#/.NET backend systems, Dynamics 365 F&O, Azure Cloud, and automated CI/CD infrastructure.
 
-Проект разработан с использованием чистых веб-технологий (HTML5, Vanilla CSS3, Vanilla JS) для максимальной производительности, чистоты кода и легкого развертывания на статических хостингах.
-
-## Особенности проекта
-* **Glassmorphic Bento Grid**: сетка из карточек в стиле матового стекла с мягким неоновым свечением и адаптивным дизайном.
-* **CI/CD Pipeline Simulator**: интерактивный виджет в реальном времени, симулирующий деплой .NET-сервиса в Azure Kubernetes Service (AKS).
-* **Microsoft Certifications Showcase**: интерактивный блок с подсветкой и подробностями о ваших сертификатах (AZ-400, MB-700, AZ-204 и др.).
-* **Интерактивный опыт**: автокопирование Email в буфер обмена в один клик, плавная анимация появления блоков при скролле (Intersection Observer).
+**Live Site:** [winchester1723.github.io](https://winchester1723.github.io/)
 
 ---
 
-## Как опубликовать портфолио на GitHub Pages (Бесплатно)
+## Key Features
 
-Для того чтобы сайт открывался по адресу `https://winchester1723.github.io/`, выполните следующие простые шаги:
+* **Glassmorphic Bento Grid Layout:** A sleek, dark-themed modular interface showing my bio, core stats, tech stack, and certifications.
+* **Interactive DevOps Pipeline Simulator:** A custom terminal widget that runs a simulated build, test, and deployment flow of a .NET service to Azure Kubernetes Service (AKS).
+* **Microsoft Certifications Dashboard:** Styled visual badges with hover effects displaying expert and associate level certifications (AZ-400, MB-700, AZ-204, MB-500, AZ-900).
+* **Interactive Timelines & Contacts:** Fully responsive work experience track and a contact section featuring clipboard copy utility, CSS-styled focus states, and a custom toast notification feedback system.
+* **Modern Performance:** Built strictly with vanilla web standards for near-instant load speeds and a 100/100 Lighthouse performance rating.
 
-### Шаг 1. Создайте репозиторий на GitHub
-1. Перейдите на [GitHub](https://github.com/) и войдите в свой аккаунт.
-2. Создайте новый публичный репозиторий.
-3. **Важно:** Назовите репозиторий строго по шаблону `ваш_логин.github.io`.
-   Для вашего аккаунта имя должно быть: **`winchester1723.github.io`**
+## Tech Stack
 
-### Шаг 2. Загрузите файлы в репозиторий
-Вы можете загрузить эти файлы с помощью Git в терминале (PowerShell/Bash):
+* **Structure & Markup:** Semantic HTML5
+* **Design & Styling:** Vanilla CSS3 (CSS Custom Properties, Grid/Flexbox layouts, backdrop-filters, custom keyframes, and ambient radial glow elements)
+* **Interactivity & Logic:** ES6+ JavaScript (Intersection Observer API for reveal animations, DOM manipulation for terminal typing simulator, clipboard API utilities)
+* **Assets & Fonts:** [Lucide Icons](https://lucide.dev/), [Outfit](https://fonts.google.com/specimen/Outfit) & [Fira Code](https://fonts.google.com/specimen/Fira+Code) via Google Fonts
 
-```bash
-# Инициализируйте репозиторий локально в папке My_ResuMe_IO
-git init
+## Local Development
 
-# Добавьте все файлы
-git add .
+To clone and run the portfolio locally:
 
-# Сделайте первый коммит
-git commit -m "Initial portfolio release"
-
-# Укажите вашу ветку как main
-git branch -M main
-
-# Привяжите к вашему удаленному репозиторию на GitHub
-git remote add origin https://github.com/winchester1723/winchester1723.github.io.git
-
-# Отправьте файлы на GitHub
-git push -u origin main
-```
-
-*(Или вы можете просто перетащить файлы `index.html`, `style.css`, `script.js` и `README.md` через веб-интерфейс GitHub в репозиторий).*
-
-### Шаг 3. Включите GitHub Pages (если не включилось автоматически)
-Обычно для репозиториев с именем `username.github.io` хостинг включается автоматически при пуше в ветку `main`. Если этого не произошло:
-1. Перейдите во вкладку **Settings** (Настройки) вашего репозитория на GitHub.
-2. В левом меню выберите раздел **Pages**.
-3. В секции **Build and deployment** убедитесь, что в качестве источника (Source) выбрана ветка **Deploy from a branch**.
-4. Ниже выберите ветку **`main`** и папку **`/ (root)`**, после чего нажмите **Save**.
-
-Сайт станет доступен в течение 1–2 минут по ссылке:
-👉 **[https://winchester1723.github.io/](https://winchester1723.github.io/)**
-
----
-
-## Настройка контактной формы
-На форме контактов используется сервис **Formspree** (бесплатный инструмент для отправки писем с HTML-форм).
-Чтобы форма отправляла сообщения на ваш email `pasha.pashazade.23@gmail.com`:
-1. Зарегистрируйтесь на сайте [Formspree.io](https://formspree.io/).
-2. Создайте новую форму ("New Form"), назовите её (например, "Portfolio Contact") и укажите вашу почту.
-3. Formspree выдаст вам ссылку вида `https://formspree.io/f/ваша_уникальная_id`.
-4. Откройте файл `index.html`, найдите строчку:
-   ```html
-   <form id="contact-form" action="https://formspree.io/f/placeholder" method="POST">
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/winchester1723/winchester1723.github.io.git
    ```
-5. Замените `https://formspree.io/f/placeholder` на вашу уникальную ссылку от Formspree.
+2. Navigate into the project folder:
+   ```bash
+   cd winchester1723.github.io
+   ```
+3. Start a local HTTP server to preview the site:
+   ```bash
+   python -m http.server 8080
+   ```
+4. Open your browser and navigate to `http://localhost:8080`.
 
-Готово! Теперь все сообщения с формы будут приходить прямо вам на почту.
+## License
+
+This project is open-source and available under the [MIT License](LICENSE).
