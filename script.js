@@ -1,125 +1,210 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize Lucide Icons
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
+    const root = document.documentElement;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
+
+    const renderIcons = () => {
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    };
+    renderIcons();
 
     // ==========================================================================
-    // Mobile Drawer Navigation
-    // ==========================================================================
-    const mobileNavToggle = document.querySelector('.mobile-nav-toggle');
-    const mobileDrawer = document.querySelector('.mobile-drawer');
-    const drawerLinks = document.querySelectorAll('.drawer-link');
-    const toggleIcon = mobileNavToggle?.querySelector('i');
-
-    if (mobileNavToggle && mobileDrawer) {
-        mobileNavToggle.addEventListener('click', () => {
-            mobileDrawer.classList.toggle('open');
-            
-            // Toggle icon representation between menu and close
-            if (mobileDrawer.classList.contains('open')) {
-                mobileNavToggle.innerHTML = '<i data-lucide="x"></i>';
-            } else {
-                mobileNavToggle.innerHTML = '<i data-lucide="menu"></i>';
-            }
-            lucide.createIcons();
-        });
-
-        // Close drawer when clicking nav links
-        drawerLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                mobileDrawer.classList.remove('open');
-                mobileNavToggle.innerHTML = '<i data-lucide="menu"></i>';
-                lucide.createIcons();
-            });
-        });
-    }
-
-    // ==========================================================================
-    // Sticky Header Scroll Effect
+    // Sticky header state (passive listener, one rAF per frame)
     // ==========================================================================
     const header = document.getElementById('header');
-    
-    const handleScroll = () => {
-        if (window.scrollY > 50) {
-            header?.classList.add('scrolled');
-        } else {
-            header?.classList.remove('scrolled');
+    let scrollTicking = false;
+
+    const updateHeader = () => {
+        header?.classList.toggle('scrolled', window.scrollY > 24);
+        scrollTicking = false;
+    };
+
+    window.addEventListener('scroll', () => {
+        if (!scrollTicking) {
+            scrollTicking = true;
+            requestAnimationFrame(updateHeader);
+        }
+    }, { passive: true });
+    updateHeader();
+
+    // ==========================================================================
+    // Mobile drawer: aria-expanded, Esc to close, scroll lock, focus handling
+    // ==========================================================================
+    const toggle = document.querySelector('.mobile-nav-toggle');
+    const drawer = document.getElementById('mobile-drawer');
+
+    const setDrawer = (open, { restoreFocus = false } = {}) => {
+        if (!toggle || !drawer) return;
+        drawer.classList.toggle('open', open);
+        root.classList.toggle('nav-open', open);
+        toggle.setAttribute('aria-expanded', String(open));
+        toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+        if (open) {
+            drawer.querySelector('a')?.focus({ preventScroll: true });
+        } else if (restoreFocus) {
+            toggle.focus({ preventScroll: true });
         }
     };
 
-    window.addEventListener('scroll', handleScroll);
-    handleScroll(); // Check initially on load
+    toggle?.addEventListener('click', () => {
+        setDrawer(toggle.getAttribute('aria-expanded') !== 'true');
+    });
 
-    // ==========================================================================
-    // Copy Email to Clipboard
-    // ==========================================================================
-    const copyEmailBtn = document.getElementById('copy-email-btn');
-    const copyTooltip = copyEmailBtn?.querySelector('.copy-tooltip');
-    const emailValue = "pasha.pashazade.23@gmail.com";
+    drawer?.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => setDrawer(false));
+    });
 
-    if (copyEmailBtn) {
-        copyEmailBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            navigator.clipboard.writeText(emailValue)
-                .then(() => {
-                    if (copyTooltip) {
-                        copyTooltip.textContent = "Copied!";
-                        copyTooltip.classList.add('show');
-                        
-                        setTimeout(() => {
-                            copyTooltip.classList.remove('show');
-                            // Revert text after transition
-                            setTimeout(() => {
-                                copyTooltip.textContent = "Copy";
-                            }, 300);
-                        }, 2000);
-                    }
-                })
-                .catch(err => {
-                    console.error('Could not copy text: ', err);
-                });
-        });
-    }
-
-    // ==========================================================================
-    // Intersection Observer for Reveal-on-Scroll Animations
-    // ==========================================================================
-    const revealElements = document.querySelectorAll('.fade-in, .bento-card, .timeline-item, .skills-category-card');
-    
-    // Add default hidden class styles programmatically if they don't have fade-in
-    revealElements.forEach(el => {
-        if (!el.classList.contains('fade-in')) {
-            el.style.opacity = '0';
-            el.style.transform = 'translateY(25px)';
-            el.style.transition = 'opacity 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && drawer?.classList.contains('open')) {
+            setDrawer(false, { restoreFocus: true });
         }
     });
 
-    const revealObserver = new IntersectionObserver((entries, observer) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const el = entry.target;
-                if (el.classList.contains('fade-in')) {
-                    el.classList.add('reveal');
-                } else {
-                    el.style.opacity = '1';
-                    el.style.transform = 'translateY(0)';
-                }
-                observer.unobserve(el); // Stop observing once revealed
-            }
-        });
-    }, {
-        threshold: 0.1,
-        rootMargin: '0px 0px -40px 0px' // Trigger slightly before element enters view
-    });
-
-    revealElements.forEach(el => {
-        revealObserver.observe(el);
+    // Close the drawer if the viewport grows past the mobile breakpoint
+    window.matchMedia('(min-width: 861px)').addEventListener('change', (e) => {
+        if (e.matches) setDrawer(false);
     });
 
     // ==========================================================================
-    // Interactive DevOps Pipeline Simulator
+    // Reveal-on-scroll with per-group stagger
+    // Hidden state lives in CSS under html.js; animation runs once per element.
+    // ==========================================================================
+    const revealSelector = '.fade-in, .section-head, .work-note, .subsection-title, .bento-card, .skills-category-card, .timeline-item, .contact-card';
+    const revealItems = Array.from(document.querySelectorAll(revealSelector));
+
+    // Stagger index = position among revealable siblings (capped so long grids don't drag)
+    revealItems.forEach(el => {
+        const siblings = Array.from(el.parentElement?.children || []).filter(c => c.matches(revealSelector));
+        el.style.setProperty('--i', Math.min(siblings.indexOf(el), 6));
+        el.classList.add('reveal-item');
+    });
+
+    const showAll = () => revealItems.forEach(el => el.classList.add('is-visible'));
+
+    if (reducedMotion.matches || !('IntersectionObserver' in window)) {
+        showAll();
+    } else {
+        const revealObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) return;
+                entry.target.classList.add('is-visible');
+                observer.unobserve(entry.target);
+            });
+        }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+
+        revealItems.forEach(el => revealObserver.observe(el));
+    }
+
+    // ==========================================================================
+    // Scroll-spy: active nav link + sliding indicator
+    // ==========================================================================
+    const navLinks = Array.from(document.querySelectorAll('.nav-link'));
+    const drawerLinks = Array.from(document.querySelectorAll('.drawer-link'));
+    const indicator = document.querySelector('.nav-indicator');
+    const sections = navLinks
+        .map(link => document.querySelector(link.getAttribute('href')))
+        .filter(Boolean);
+    let activeId = null;
+
+    const moveIndicator = () => {
+        if (!indicator) return;
+        const active = navLinks.find(l => l.getAttribute('href') === `#${activeId}`);
+        if (!active) {
+            indicator.style.opacity = '0';
+            return;
+        }
+        const inset = 12; // match .nav-link horizontal padding so the bar sits under the text
+        const width = Math.max(active.offsetWidth - inset * 2, 1);
+        indicator.style.transform = `translateX(${active.offsetLeft + inset}px) scaleX(${width})`;
+        indicator.style.opacity = '1';
+    };
+
+    const setActive = (id) => {
+        if (id === activeId) return;
+        activeId = id;
+        [...navLinks, ...drawerLinks].forEach(link => {
+            if (link.getAttribute('href') === `#${id}`) {
+                link.setAttribute('aria-current', 'true');
+            } else {
+                link.removeAttribute('aria-current');
+            }
+        });
+        moveIndicator();
+    };
+
+    if ('IntersectionObserver' in window && sections.length) {
+        // A section is "active" when it crosses a thin band ~40% down the viewport
+        const spy = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) setActive(entry.target.id);
+            });
+        }, { rootMargin: '-40% 0px -55% 0px' });
+        sections.forEach(s => spy.observe(s));
+
+        // Above the first section (hero) nothing is active
+        const hero = document.getElementById('hero');
+        if (hero) {
+            new IntersectionObserver(([entry]) => {
+                if (entry.isIntersecting) setActive(null);
+            }, { rootMargin: '-40% 0px -55% 0px' }).observe(hero);
+        }
+    }
+
+    // Fonts change link widths: re-measure once they are ready and on resize
+    document.fonts?.ready.then(moveIndicator);
+    window.addEventListener('resize', moveIndicator, { passive: true });
+
+    // ==========================================================================
+    // Card spotlight that follows the pointer (fine pointers only)
+    // ==========================================================================
+    if (finePointer.matches && !reducedMotion.matches) {
+        let pending = null;
+        document.addEventListener('pointermove', (e) => {
+            const card = e.target.closest?.('.bento-card, .skills-category-card, .timeline-content');
+            if (!card) return;
+            if (pending) cancelAnimationFrame(pending);
+            pending = requestAnimationFrame(() => {
+                const rect = card.getBoundingClientRect();
+                card.style.setProperty('--mx', `${e.clientX - rect.left}px`);
+                card.style.setProperty('--my', `${e.clientY - rect.top}px`);
+                pending = null;
+            });
+        }, { passive: true });
+    }
+
+    // ==========================================================================
+    // Copy email to clipboard
+    // ==========================================================================
+    const copyEmailBtn = document.getElementById('copy-email-btn');
+    const copyTooltip = copyEmailBtn?.querySelector('.copy-tooltip');
+    const emailValue = 'pasha.pashazade.23@gmail.com';
+    let tooltipTimer;
+
+    const flashTooltip = (text) => {
+        if (!copyTooltip) return;
+        copyTooltip.textContent = text;
+        copyTooltip.classList.add('show');
+        clearTimeout(tooltipTimer);
+        tooltipTimer = setTimeout(() => copyTooltip.classList.remove('show'), 1800);
+    };
+
+    copyEmailBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!navigator.clipboard) {
+            flashTooltip('Copy not supported');
+            return;
+        }
+        navigator.clipboard.writeText(emailValue)
+            .then(() => flashTooltip('Copied'))
+            .catch(() => flashTooltip('Copy failed'));
+    });
+
+    copyEmailBtn?.addEventListener('mouseenter', () => {
+        if (!copyTooltip?.classList.contains('show')) flashTooltip('Copy');
+    });
+
+    // ==========================================================================
+    // D365 F&O build pipeline simulator (demo)
     // ==========================================================================
     const runPipelineBtn = document.getElementById('run-pipeline-btn');
     const terminalBody = document.getElementById('terminal-body');
@@ -142,162 +227,49 @@ document.addEventListener('DOMContentLoaded', () => {
         { text: 'Deployment succeeded — ready for UAT sign-off. (demo)', type: 'success', delay: 300 }
     ];
 
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    const setPipelineButton = (icon, label, extraClass = '') => {
+        runPipelineBtn.innerHTML = `<i data-lucide="${icon}" class="${extraClass}"></i> ${label}`;
+        renderIcons();
+    };
+
+    const appendTerminalLine = (text, type) => {
+        terminalBody.querySelector('.cursor-blink')?.remove();
+
+        const line = document.createElement('div');
+        line.className = 'terminal-line';
+        if (type !== 'default') line.classList.add(type);
+
+        const prefix = { info: '[INFO] ', success: '[OK] ', err: '[ERROR] ' }[type] || '$ ';
+        line.textContent = prefix + text;
+
+        const cursor = document.createElement('span');
+        cursor.className = 'cursor-blink';
+        line.appendChild(cursor);
+
+        terminalBody.appendChild(line);
+        terminalBody.scrollTo({ top: terminalBody.scrollHeight, behavior: reducedMotion.matches ? 'auto' : 'smooth' });
+    };
+
     if (runPipelineBtn && terminalBody) {
         let isRunning = false;
 
         runPipelineBtn.addEventListener('click', async () => {
             if (isRunning) return;
             isRunning = true;
-
-            // Update button state
             runPipelineBtn.disabled = true;
-            runPipelineBtn.innerHTML = '<i data-lucide="loader" class="loader-icon spin"></i> Running...';
-            lucide.createIcons();
-
-            // Clear terminal body
+            setPipelineButton('loader', 'Running...', 'spin');
             terminalBody.innerHTML = '';
 
-            // Run pipeline logs sequentially
             for (const step of pipelineSteps) {
                 await sleep(step.delay);
                 appendTerminalLine(step.text, step.type);
             }
 
-            // Reset button state
             isRunning = false;
             runPipelineBtn.disabled = false;
-            runPipelineBtn.innerHTML = '<i data-lucide="rotate-ccw"></i> Rerun Build';
-            lucide.createIcons();
-        });
-    }
-
-    // Helper: Sleep delay using Promises
-    function sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    // Helper: Append line to terminal
-    function appendTerminalLine(text, type) {
-        if (!terminalBody) return;
-
-        // Remove any existing cursor
-        const oldCursor = terminalBody.querySelector('.cursor-blink');
-        if (oldCursor) oldCursor.remove();
-
-        const line = document.createElement('div');
-        line.className = 'terminal-line';
-        if (type !== 'default') {
-            line.classList.add(type);
-        }
-
-        // Add special prefix based on step type
-        let prefix = '$ ';
-        if (type === 'info') prefix = '[INFO] ';
-        if (type === 'success') prefix = '[SUCCESS] ';
-        if (type === 'err') prefix = '[ERROR] ';
-
-        line.textContent = prefix + text;
-        
-        // Append cursor to the line
-        const cursor = document.createElement('span');
-        cursor.className = 'cursor-blink';
-        line.appendChild(cursor);
-
-        terminalBody.appendChild(line);
-        
-        // Scroll terminal to bottom
-        terminalBody.scrollTop = terminalBody.scrollHeight;
-    }
-
-    // ==========================================================================
-    // Custom Toast Notification System
-    // ==========================================================================
-    function showToast(title, message, type = 'info') {
-        const container = document.getElementById('toast-container');
-        if (!container) return;
-
-        const toast = document.createElement('div');
-        toast.className = 'toast';
-        
-        let iconName = 'info';
-        if (type === 'success') iconName = 'check-circle';
-        if (type === 'warning') iconName = 'alert-triangle';
-        if (type === 'error') iconName = 'x-circle';
-
-        toast.innerHTML = `
-            <div class="toast-icon">
-                <i data-lucide="${iconName}"></i>
-            </div>
-            <div class="toast-content">
-                <div class="toast-title">${title}</div>
-                <div class="toast-message">${message}</div>
-            </div>
-            <button class="toast-close" aria-label="Close">
-                <i data-lucide="x"></i>
-            </button>
-        `;
-
-        container.appendChild(toast);
-        
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
-        }
-
-        setTimeout(() => {
-            toast.classList.add('show');
-        }, 50);
-
-        const closeBtn = toast.querySelector('.toast-close');
-        closeBtn.addEventListener('click', () => {
-            toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 400);
-        });
-
-        setTimeout(() => {
-            if (toast.parentNode) {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 400);
-            }
-        }, 6000);
-    }
-
-    // ==========================================================================
-    // Contact Form Action Intercept (Fallback for Placeholder Formspree ID)
-    // ==========================================================================
-    const contactForm = document.getElementById('contact-form');
-    if (contactForm) {
-        contactForm.addEventListener('submit', (e) => {
-            const action = contactForm.getAttribute('action');
-            if (action.includes('/placeholder')) {
-                // Prevent Formspree redirect error
-                e.preventDefault();
-                
-                const name = document.getElementById('form-name').value;
-                const email = document.getElementById('form-email').value;
-                const message = document.getElementById('form-message').value;
-                
-                // Construct mailto link
-                const subject = encodeURIComponent(`Portfolio Contact from ${name}`);
-                const body = encodeURIComponent(
-                    `Name: ${name}\n` +
-                    `Email: ${email}\n\n` +
-                    `Message:\n${message}`
-                );
-                
-                const mailtoLink = `mailto:pasha.pashazade.23@gmail.com?subject=${subject}&body=${body}`;
-                
-                // Open mailto client with dynamic premium toast
-                showToast(
-                    "Form Setup Required",
-                    "Formspree ID is not configured yet. Opening your default mail client to send this message. Please see README.md for instructions.",
-                    "warning"
-                );
-                
-                // Delay mailto opening slightly so the user can see the beautiful toast first
-                setTimeout(() => {
-                    window.location.href = mailtoLink;
-                }, 1000);
-            }
+            setPipelineButton('rotate-ccw', 'Rerun Build');
         });
     }
 });

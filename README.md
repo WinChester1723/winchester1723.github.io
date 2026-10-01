@@ -13,7 +13,7 @@ Static portfolio site of **Pasha Pashazade** — Senior Software Engineer focuse
 
 ## Tech stack
 
-Semantic HTML5, vanilla CSS (custom properties, grid/flexbox), vanilla JavaScript (IntersectionObserver reveals, terminal simulator, clipboard copy). Icons: [Lucide](https://lucide.dev/) (pinned version). Fonts: Outfit & Fira Code (Google Fonts).
+Semantic HTML5, vanilla CSS (design tokens, grid/flexbox, scroll-driven progress bar), vanilla JavaScript (IntersectionObserver reveals with stagger, scroll-spy navigation, accessible mobile menu, terminal simulator, clipboard copy). Motion uses transform/opacity only and respects `prefers-reduced-motion`; content stays visible without JavaScript. Icons: [Lucide](https://lucide.dev/) (pinned version). Fonts: Inter & JetBrains Mono (Google Fonts).
 
 ## Local preview
 
